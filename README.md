@@ -1,0 +1,2 @@
+# generator
+A random idea
