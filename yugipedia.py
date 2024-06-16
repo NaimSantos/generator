@@ -10,6 +10,7 @@ mainurl = 'https://yugipedia.com/api.php'
 useragent = {
     'User-Agent': 'TextRegeneratorFromLink'
 }
+a=1
 
 def Get_Page_Title_From_Url(url):
     parsed_url = urlparse(url)
@@ -40,11 +41,23 @@ def Extract_Card_Info(page_content):
 
     card_info = {}
     for template in templates:
+        print("The name of this table is ", template.name.strip())
         if template.name.strip() == 'CardTable2':
             for arg in template.arguments:
                 for key in requested_fields:
                     if arg.name.strip() == key:
                         card_info[key] = arg.value.strip()
+            break
+    return card_info
+
+def Extract_All_Card_Info(page_content):
+    parsed_wikitext = wtp.parse(page_content)
+    templates = parsed_wikitext.templates
+    card_info = {}
+    for template in templates:
+        if template.name.strip() == 'CardTable2':
+            for arg in template.arguments:
+                card_info[arg.name.strip()] = arg.value.strip()
             break
     return card_info
 
@@ -63,10 +76,9 @@ def Get_Data_From_Page(url,printinfo="False"):
     card_info = None
 
     if page_title:
-        print(f"\nCurrent reading the page: {page_title}")
         page_content = Get_Page_Content_By_Title(page_title)
         if page_content:
-            card_info = Extract_Card_Info(page_content)
+            card_info = Extract_All_Card_Info(page_content)
             if card_info:
                 if printinfo=='Full':
                     print("\nCard information (full):")
@@ -98,7 +110,8 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
     elif 'kr_sets' in cardinfo:
         source_set=cardinfo['kr_sets']
 
-    print("THE PRODUCTYPE IS ", producttype)
+
+    producttype=int(producttype.strip())
     if producttype==1:
         if 'password' in cardinfo:
             print("The card password is :")
@@ -118,7 +131,7 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
 
     print(f"Generating card {data.password} ({texts.name})")
 
-    #Card text (effects, materials, pendulum text, if any):
+    ##Card text (effects, materials, pendulum text, if any):
     source_text = cardinfo['lore']
     materials = ''
     if 'materials' in cardinfo:
@@ -136,9 +149,9 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
     ot = 3 #Assumes by default an official card released in all regions
     if producttype==3 :
         if 'rush_duel_status' in cardinfo:
-            ot=0x200 #Rush released
-        else:
             ot=0x300 #Rush pre-release
+        else:
+            ot=0x200 #Rush released
     if producttype==2: 
         if 'ocg_status' in cardinfo:
             ot=0x101 # TCG, pre-release
@@ -195,6 +208,6 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
     elif 'card_type' in cardinfo:
         data.cardtype = ReturnSTTypeFromString(cardinfo['card_type'],cardinfo['property'])
     else:
-        print("UNKNOWN CARD TYPE. Using default card information.")
+        print("Unknown Card Type. Using default card information.")
 
     return texts,data

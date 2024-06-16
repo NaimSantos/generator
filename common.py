@@ -237,7 +237,7 @@ def ReturnLinkFromString(string):
     return total+1
 
 def ReturnPassCodeFromBaseSet(setbase, input_string):
-    pattern = r"(?:EN|JP)(\d{3})"
+    pattern = r"(?:EN|JP|KR)(\d{3})"
     match = re.search(pattern, input_string)
     if match:
         return int(setbase + match.group(1))

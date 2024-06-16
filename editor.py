@@ -16,8 +16,6 @@ def StartApplication():
 
 def get_text_from_widget(text_widget):
     raw_text = text_widget.get("1.0", "end-1c")
-    #print("Exibindo o texto recebido:\n\n\n")
-    #print(raw_text)
     return raw_text
 
 def GenerateCDB(file_name,producttype,baseset,urls):
@@ -30,10 +28,10 @@ def GenerateCDB(file_name,producttype,baseset,urls):
 
     urls = urls.split('\n')
     for url in urls:
-        print(url)
         page,title=Get_Data_From_Page(url)
         card_text,card_data=GenerateDataFromCardInfo(page,title,baseID,producttype)
         insert_into_database(file_name,card_text,card_data)
+    print("Finished!")
 
 def CreateMainButtons(window):
     frame = Frame(window)
