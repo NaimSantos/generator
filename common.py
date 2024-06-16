@@ -13,7 +13,6 @@ class InputStruct:
             self.card_set = card_set
             self.outputfile = outputfile
 
-
 class Table_DatasObject:
     def __init__(self, password=1, ot=0, alias=0, setcode=0, cardtype=1, atk=0, defense=0, level=0, race=0, attribute=0, category=0):
         self.password = password
@@ -49,7 +48,6 @@ class Table_TextsObject:
         self.str14 = str14
         self.str15 = str15
         self.str16 = str16
-
 
 TYPE_MONSTER     = 0x1
 TYPE_SPELL       = 0x2
@@ -130,8 +128,6 @@ LINK_MARKER_RIGHT        = 0x20
 LINK_MARKER_TOP_LEFT     = 0x40
 LINK_MARKER_TOP          = 0x80
 LINK_MARKER_TOP_RIGHT    = 0x100
-
-
 
 def ReturnMonsterTypeFromString(fulltype):
     typ=TYPE_MONSTER
@@ -235,7 +231,6 @@ def ReturnRaceFromString(fulltype):
         rac=rac|RACE_GALAXY
     return rac
 
-
 def ReturnLinkFromString(string):
     #Assumption: the number of link markers is the number of commas separating them plus 1
     total = string.count(',')
@@ -308,9 +303,7 @@ def ReturnAttributeFromString(string):
         att=att|ATTRIBUTE_DARK
     if "DIVINE" in string:
         att=att|ATTRIBUTE_DIVINE
-    #TODO
     return att
-
 
 def ReturnArchetypeFromString(string):
     arche=0
@@ -318,30 +311,24 @@ def ReturnArchetypeFromString(string):
     return arche
 
 def format_text(input_text):
-    # Replace <br /> with newline \n
+    # A proper newline
     input_text = re.sub(r'<br\s*/?>', '\n', input_text)
-    
-    # Find and process [[ ... ]]
+    # Find and treat the hyperlinks
     def process_match(match):
-        inner_text = match.group(1)  # Get the substring inside [[ ]]
-        
-        # Check for |
+        inner_text = match.group(1)
+        # Check for text delimited by |, which is part of the html tag
         if '|' in inner_text:
-            # Remove initial part including |
             processed_text = inner_text.split('|', 1)[1]
         else:
             processed_text = inner_text
 
         return processed_text
 
-    # Replace [[ ... ]] with processed content
+    # Replace [[ ... ]] , then remove [[ and ]] and '' (two single quote marks)
     input_text = re.sub(r'\[\[(.*?)\]\]', lambda match: process_match(match), input_text)
-    
-    # Remove remaining [[ and ]]
     input_text = re.sub(r'\[\[|\]\]', '', input_text)
-
-    # Remove ''
     input_text = input_text.replace("''", '')
+
     return input_text.strip()
 
 def FormatOCGCardToEdoproText(source_text, materials, pend_effect):
@@ -384,9 +371,6 @@ def FormatCardName(pagetitle):
         '(R)': '[R]'
     }
     output_string = pagetitle
-    print("\n\n\n\n THE OF THE STRING TYPE IS ", type(output_string))
-
-    print("THe page title is  ", type(output_string))
     for old, new in replacements.items():
         output_string = output_string.replace(old, new)
 
@@ -398,15 +382,12 @@ def GenerateLevelWithPScale(lvl,scale):
     rscale = lscale
     return ((lscale << 24) | (rscale << 16) | (level & 0xff))
 
-
 def convert_to_integer_or_return_original(string):
     try:
         number = int(string)
         return number
     except ValueError:
         return string
-
-
 
 def delete_file(filename):
     current_directory = os.getcwd()

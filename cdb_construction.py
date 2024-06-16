@@ -18,14 +18,10 @@ def create_new_database(filename):
     cdb.commit()
     cdb.close()
 
-
-
-
 def insert_into_database(filename, obj1, obj2):
     cdb = sqlite3.connect(filename)
     cursor = cdb.cursor()
 
-    # edopro's database structure has 2 tables: 'texts' and datas
     cursor.execute('''CREATE TABLE IF NOT EXISTS texts (id integer primary key, name text, desc text,
                                                         str1 text, str2 text, str3 text, str4 text,
                                                         str5 text, str6 text, str7 text, str8 text,

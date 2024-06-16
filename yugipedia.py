@@ -3,17 +3,13 @@ import requests
 import wikitextparser as wtp
 from urllib.parse import urlparse, unquote
 
-
 #Global Variables:
 requested_fields=["name", "attribute", "card_type", "property", "types", "level", "atk", "def", "password", "lore", "archseries", "pendulum_scale", "pendulum_effect", "link_arrows", "ocg_status", "tcg_status", "materials", "rank", "summoned_by", 'jp_sets', "requirement", "effect_types", "summoning_condition", "rush_duel_status", "maximum_atk", "kr_sets"]
-
-
 
 mainurl = 'https://yugipedia.com/api.php'
 useragent = {
     'User-Agent': 'TextRegeneratorFromLink'
 }
-
 
 def Get_Page_Title_From_Url(url):
     parsed_url = urlparse(url)
@@ -47,17 +43,14 @@ def Extract_Card_Info(page_content):
         if template.name.strip() == 'CardTable2':
             for arg in template.arguments:
                 for key in requested_fields:
-                    if arg.name.strip() == key:# Debugging: Print raw value before stripping
-                        #print(f"Raw value for '{key}': '{arg.value}'")
+                    if arg.name.strip() == key:
                         card_info[key] = arg.value.strip()
             break
-
     return card_info
 
 def Print_Full_Card_Info(page_content):
     parsed_wikitext = wtp.parse(page_content)
     templates = parsed_wikitext.templates
-
     for template in templates:
         if template.name.strip() == 'CardTable2':
             print("Full card information:")
@@ -96,7 +89,7 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
 
     ##Name and passcode
     texts.name = FormatCardName(pagetitle)
-    
+
     source_set=''
     if 'jp_sets' in cardinfo:
         source_set=cardinfo['jp_sets']
@@ -104,7 +97,7 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
         source_set=cardinfo['en_sets']
     elif 'kr_sets' in cardinfo:
         source_set=cardinfo['kr_sets']
-    
+
     print("THE PRODUCTYPE IS ", producttype)
     if producttype==1:
         if 'password' in cardinfo:
@@ -122,7 +115,7 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
             temp_password=ReturnPassCodeFromBaseSet(str(baseID), source_set)
             data.password=temp_password
             texts.password=temp_password
-    
+
     print(f"Generating card {data.password} ({texts.name})")
 
     #Card text (effects, materials, pendulum text, if any):
@@ -140,25 +133,26 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
         texts.desc = FormatOCGCardToEdoproText(source_text, materials, pend_effect)
 
     ##OTs
-    ot = 3 #Assumes by default released in both regions
+    ot = 3 #Assumes by default an official card released in all regions
     if producttype==3 :
-        ot=0x200
-    elif 'rush_duel_status' in cardinfo:
-        ot=0x300
-    elif 'ocg_status' in cardinfo:
-        ot=0x101 # TCG, pre-release
-    elif 'tcg_status' in cardinfo:
-        ot=0x102 # OCG, pre-release
+        if 'rush_duel_status' in cardinfo:
+            ot=0x200 #Rush released
+        else:
+            ot=0x300 #Rush pre-release
+    if producttype==2: 
+        if 'ocg_status' in cardinfo:
+            ot=0x101 # TCG, pre-release
+        elif 'tcg_status' in cardinfo:
+            ot=0x102 # OCG, pre-release
     data.ot = ot
+
     ##Monster cards
     if 'types' in cardinfo:
-
         #ATTACK:
         atkvalue=int(cardinfo['atk'].strip())
         if atkvalue == '?' :
             atkvalue = -2
         data.atk=atkvalue
-
 
         #DEFENSE:
         defvalue = 0
@@ -169,7 +163,6 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
         elif 'link_arrows' in cardinfo:
             defvalue = ReturnLinkMarkerFromString(cardinfo['link_arrows'])
         data.defense=defvalue
-
 
         ##Level, Ranks, Links:
         newlevel=1
@@ -186,10 +179,8 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
         #ATTRIBUTE:
         data.attribute= ReturnAttributeFromString(cardinfo['attribute'])
 
-
         #RACES
         data.race = ReturnRaceFromString(cardinfo['types'])
-
 
         #CARD TYPE:
         monster_type = ReturnMonsterTypeFromString(cardinfo['types'])
@@ -197,13 +188,9 @@ def GenerateDataFromCardInfo(cardinfo,pagetitle,baseID,producttype):
             monster_type=monster_type|TYPE_TOKEN
         data.cardtype=monster_type
 
-
         ##ARCHETYPES:
         if 'archseries' in cardinfo:
             data.setcode = ReturnArchetypeFromString(cardinfo['archseries'])
-
-
-
     ##Spell and Trap cards
     elif 'card_type' in cardinfo:
         data.cardtype = ReturnSTTypeFromString(cardinfo['card_type'],cardinfo['property'])

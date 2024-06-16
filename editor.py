@@ -5,14 +5,10 @@ from yugipedia import *
 from cdb_construction import *
 #from time import strftime
 
-
-
 def main():
    StartApplication()
 
-
 def StartApplication():
-
     mainscreen = Tk()
     mainscreen.title("Automatic Database Generator")
     CreateMainButtons(mainscreen)
@@ -20,12 +16,9 @@ def StartApplication():
 
 def get_text_from_widget(text_widget):
     raw_text = text_widget.get("1.0", "end-1c")
-    print("Exibindo o texto recebido\n\n\n:")
-    print(raw_text)
-    # Replace unnecessary newlines (if any)
-    #formatted_text = raw_text.replace("\n", "")
+    #print("Exibindo o texto recebido:\n\n\n")
+    #print(raw_text)
     return raw_text
-
 
 def GenerateCDB(file_name,producttype,baseset,urls):
 
@@ -42,15 +35,12 @@ def GenerateCDB(file_name,producttype,baseset,urls):
         card_text,card_data=GenerateDataFromCardInfo(page,title,baseID,producttype)
         insert_into_database(file_name,card_text,card_data)
 
-
 def CreateMainButtons(window):
     frame = Frame(window)
     frame.grid()
 
-   
     SelectedOT = StringVar() 
     #Exit button
-
 
     #Arquivo de saida:
     label_outputfile = Label(
@@ -60,7 +50,7 @@ def CreateMainButtons(window):
         width=20,
     )
     label_outputfile.grid(row=0, column=0, pady=5)
-    
+
     textbox_outputfile =Text(
         frame,
         height = 1,
@@ -118,7 +108,7 @@ def CreateMainButtons(window):
         bg = "white"
     )
     textbox_packcode.grid(row=2, column=1, columnspan=3, padx=10)
-    
+
     #Links:
     label_urls=Label(
         frame,
@@ -149,7 +139,6 @@ def CreateMainButtons(window):
                     )
     )
     button_generatecdb.grid(row=6, column=3, rowspan=2, columnspan=2, pady=10)
-    
     #Encerrar:
     quitbutton=Button(
         frame,
@@ -158,9 +147,6 @@ def CreateMainButtons(window):
         width = 10,
     )
     quitbutton.grid(row=6, column=0, rowspan=2, pady=10)
-
-
-
 
 
 if __name__ == "__main__":
