@@ -1,53 +1,5 @@
-## Basic data structures and common names/variable used in the generation
-import re
-import os
-
-def print_lines(lines):
-    for line in lines:
-        print(line)
-
-class InputStruct:
-    def __init__(self, outputfile='', producttype=0, card_set=0, urls=''):
-            self.outputfile = outputfile
-            self.producttype = producttype
-            self.card_set = card_set
-            self.outputfile = outputfile
-
-class Table_DatasObject:
-    def __init__(self, password=1, ot=0, alias=0, setcode=0, cardtype=1, atk=0, defense=0, level=0, race=0, attribute=0, category=0):
-        self.password = password
-        self.ot = ot
-        self.alias = alias
-        self.setcode = setcode
-        self.cardtype = cardtype
-        self.atk = atk
-        self.defense = defense
-        self.level = level
-        self.race = race
-        self.attribute = attribute
-        self.category = category
-
-class Table_TextsObject:
-    def __init__(self, password=1, name='Default Card Name', desc='Default card text', str1='', str2='', str3='', str4='', str5='', str6='', str7='', str8='', str9='', str10='', str11='', str12='', str13='', str14='', str15='', str16=''):
-        self.password = password
-        self.name = name
-        self.desc = desc
-        self.str1 = str1
-        self.str2 = str2
-        self.str3 = str3
-        self.str4 = str4
-        self.str5 = str5
-        self.str6 = str6
-        self.str7 = str7
-        self.str8 = str8
-        self.str9 = str9
-        self.str10 = str10
-        self.str11 = str11
-        self.str12 = str12
-        self.str13 = str13
-        self.str14 = str14
-        self.str15 = str15
-        self.str16 = str16
+import os #Used to remove existing files with the same name
+import re #Regex expressions, to manage card text/name
 
 TYPE_MONSTER     = 0x1
 TYPE_SPELL       = 0x2
@@ -129,7 +81,42 @@ LINK_MARKER_TOP_LEFT     = 0x40
 LINK_MARKER_TOP          = 0x80
 LINK_MARKER_TOP_RIGHT    = 0x100
 
-def ReturnMonsterTypeFromString(fulltype):
+#Basic classes:
+
+class CardObject:
+    def __init__(self, password=1, ot=0, alias=0, setcode=0, cardtype=1, atk=0, defense=0, level=0, race=0, attribute=0, category=0, name='Default Card Name', desc='Default card text', str1='', str2='', str3='', str4='', str5='', str6='', str7='', str8='', str9='', str10='', str11='', str12='', str13='', str14='', str15='', str16=''):
+        self.password = password
+        self.ot = ot
+        self.alias = alias
+        self.setcode = setcode
+        self.cardtype = cardtype
+        self.atk = atk
+        self.defense = defense
+        self.level = level
+        self.race = race
+        self.attribute = attribute
+        self.category = category
+        self.password = password
+        self.name = name
+        self.desc = desc
+        self.str1 = str1
+        self.str2 = str2
+        self.str3 = str3
+        self.str4 = str4
+        self.str5 = str5
+        self.str6 = str6
+        self.str7 = str7
+        self.str8 = str8
+        self.str9 = str9
+        self.str10 = str10
+        self.str11 = str11
+        self.str12 = str12
+        self.str13 = str13
+        self.str14 = str14
+        self.str15 = str15
+        self.str16 = str16
+
+def GetMonsterTypeAsInteger(fulltype):
     typ=TYPE_MONSTER
     if "Normal" in fulltype:
         typ=typ|TYPE_NORMAL
@@ -163,7 +150,30 @@ def ReturnMonsterTypeFromString(fulltype):
         typ=typ|TYPE_MAXIMUM
     return typ
 
-def ReturnRaceFromString(fulltype):
+def GetSpellTrapTypeAsInteger(fulltype,propertytype):
+    typ=0
+    #Major Card Types:
+    if "Spell" in fulltype:
+        typ=typ|TYPE_SPELL
+    elif "Trap" in fulltype:
+        typ=typ|TYPE_TRAP
+    
+    #Specialized card types (type_normal should not be added)
+    if "Quick-Play" in propertytype:
+        typ=typ|TYPE_QUICKPLAY
+    if "Continuous" in propertytype:
+        typ=typ|TYPE_CONTINUOUS
+    if "Ritual" in propertytype:
+        typ=typ|TYPE_RITUAL
+    if "Field" in propertytype:
+        typ=typ|TYPE_FIELD
+    if "Counter" in propertytype:
+        typ=typ|TYPE_COUNTER
+    if "Equip" in propertytype:
+        typ=typ|TYPE_EQUIP
+    return typ
+
+def GetRaceAsInteger(fulltype):
     rac= 0
     if "Warrior" in fulltype:
         rac=rac|RACE_WARRIOR
@@ -231,20 +241,30 @@ def ReturnRaceFromString(fulltype):
         rac=rac|RACE_GALAXY
     return rac
 
-def ReturnLinkFromString(string):
+def GetAttributeAsInteger(string):
+    att=0
+    if "EARTH" in string:
+        att=att|ATTRIBUTE_EARTH
+    if "WATER" in string:
+        att=att|ATTRIBUTE_WATER
+    if "FIRE" in string:
+        att=att|ATTRIBUTE_FIRE
+    if "WIND" in string:
+        att=att|ATTRIBUTE_WIND
+    if "LIGHT" in string:
+        att=att|ATTRIBUTE_LIGHT
+    if "DARK" in string:
+        att=att|ATTRIBUTE_DARK
+    if "DIVINE" in string:
+        att=att|ATTRIBUTE_DIVINE
+    return att
+
+def GetLinkRatingAsInteger(string):
     #Assumption: the number of link markers is the number of commas separating them plus 1
     total = string.count(',')
     return total+1
 
-def ReturnPassCodeFromBaseSet(setbase, input_string):
-    pattern = r"(?:EN|JP|KR)(\d{3})"
-    match = re.search(pattern, input_string)
-    if match:
-        return int(setbase + match.group(1))
-    else:
-        return 0
-
-def ReturnLinkMarkerFromString(string):
+def GetLinkMarkersAsInteger(string):
     marker = 0
     if "Bottom-Left" in string:
         marker=marker|LINK_MARKER_BOTTOM_LEFT
@@ -264,106 +284,88 @@ def ReturnLinkMarkerFromString(string):
         marker=marker|LINK_MARKER_TOP_RIGHT
     return marker
 
-def ReturnSTTypeFromString(fulltype,propertytype):
-    typ=0
-    #Major Card Types:
-    if "Spell" in fulltype:
-        typ=typ|TYPE_SPELL
-    elif "Trap" in fulltype:
-        typ=typ|TYPE_TRAP
-    
-    #Specialized card types (type_normal should not be added)
-    if "Quick-Play" in propertytype:
-        typ=typ|TYPE_QUICKPLAY
-    if "Continuous" in propertytype:
-        typ=typ|TYPE_CONTINUOUS
-    if "Ritual" in propertytype:
-        typ=typ|TYPE_RITUAL
-    if "Field" in propertytype:
-        typ=typ|TYPE_FIELD
-    if "Counter" in propertytype:
-        typ=typ|TYPE_COUNTER
-    if "Equip" in propertytype:
-        typ=typ|TYPE_EQUIP
-    return typ
+def CreatePasscodeFromBaseset(setbase, input_string):
+    pattern = r"(?:EN|JP|KR)(\d{3})"
+    match = re.search(pattern, input_string)
+    if match:
+        return int(setbase + match.group(1))
+    else:
+        return 0
 
-def ReturnAttributeFromString(string):
-    att=0
-    if "EARTH" in string:
-        att=att|ATTRIBUTE_EARTH
-    if "WATER" in string:
-        att=att|ATTRIBUTE_WATER
-    if "FIRE" in string:
-        att=att|ATTRIBUTE_FIRE
-    if "WIND" in string:
-        att=att|ATTRIBUTE_WIND
-    if "LIGHT" in string:
-        att=att|ATTRIBUTE_LIGHT
-    if "DARK" in string:
-        att=att|ATTRIBUTE_DARK
-    if "DIVINE" in string:
-        att=att|ATTRIBUTE_DIVINE
-    return att
+#TODO: read from our github?
+def GenerateArchetype(string):
+    if not string:
+        return 0
+    else:   
+        arche=0
+        return arche
 
-def ReturnArchetypeFromString(string):
-    arche=0
-    #TODO
-    return arche
+def TextCleanup(input_text):
+    #List of steps done:
+    #1: replace <br /> by a new line
+    #2: remove hyperlinks
+    #3: remove [[, ]] and '' (two single quote marks, used in the text of normal monster)
 
-def format_text(input_text):
-    # A proper newline
     input_text = re.sub(r'<br\s*/?>', '\n', input_text)
-    # Find and treat the hyperlinks
     def process_match(match):
         inner_text = match.group(1)
-        # Check for text delimited by |, which is part of the html tag
         if '|' in inner_text:
             processed_text = inner_text.split('|', 1)[1]
         else:
             processed_text = inner_text
 
         return processed_text
-
-    # Replace [[ ... ]] , then remove [[ and ]] and '' (two single quote marks)
     input_text = re.sub(r'\[\[(.*?)\]\]', lambda match: process_match(match), input_text)
     input_text = re.sub(r'\[\[|\]\]', '', input_text)
     input_text = input_text.replace("''", '')
 
     return input_text.strip()
 
-def FormatOCGCardToEdoproText(source_text, materials, pend_effect):
-    source_text=format_text(source_text)
-    pend_effect=format_text(pend_effect)
-    materials=format_text(materials)
-    return pend_effect + materials + source_text
+def GenerateFormatedOCGCardText(cardinfo):
+    pend_text = TextCleanup(cardinfo.get('pendulum_effect', ''))
+    mat_text = TextCleanup(cardinfo.get('materials', ''))
+    eff_text = TextCleanup(cardinfo.get('lore', ''))
 
-def FormatRushCardToEdoproText(cardinfo):
-    effect=format_text(cardinfo.get('lore', ''))
-    req=format_text(cardinfo.get('requirement', ''))
-    materials=format_text(cardinfo.get('materials', ''))
-    sum_con=format_text(cardinfo.get('summoning_condition', ''))
+    #Pendulum monsters (with or without pendulum text; normal or effect monsters)
+    if pend_text:
+        pend_text = '[ Pendulum Effect ]\n' + pend_text
+        if 'Normal' in cardinfo['types'] :
+            pend_text =  pend_text + '\n----------------------------------------\n[ Flavor Text ]\n'
+        elif 'Normal' in cardinfo['types']:
+            pend_text = pend_text +'\n----------------------------------------\n[ Monster Effect ]\n'
+ 
+    if mat_text:
+        mat_text = mat_text + '\n'
+    return pend_text + mat_text + eff_text
+
+def GenerateFormatedRushCardText(cardinfo):
+    eff_text = TextCleanup(cardinfo.get('lore', ''))
+    req_tex = TextCleanup(cardinfo.get('requirement', ''))
+    mat_text = TextCleanup(cardinfo.get('materials', ''))
+    sumcon_text = TextCleanup(cardinfo.get('summoning_condition', ''))
     maximum_atk = cardinfo.get('maximum_atk', '')
-    effect_types= cardinfo.get('effect_types', '')
+    effect_types = cardinfo.get('effect_types', '')
+
     efftype=''
     if "Continuous" in effect_types:
-        efftype = "[CONTINUOUS EFFECT]"
+        efftype = "[CONTINUOUS EFFECT]\n"
     elif "Multi-Choice" in effect_types:
-        efftype = "[MULTI-CHOICE EFFECT]"
+        efftype = "[MULTI-CHOICE EFFECT]\n"
     else:
-        efftype = "[EFFECT]"
+        efftype = "[EFFECT]\n"
 
     if maximum_atk:
         maximum_atk = "MAXIMUM ATK = " + maximum_atk + '\n'
-    if materials :
-        materials = materials + '\n\n'
-    if sum_con :
-        sum_con = sum_con + '\n\n'
-    if req :
-        req = "[REQUIREMENT]\n" + req + '\n'
+    if mat_text :
+        mat_text = mat_text + '\n\n'
+    if sumcon_text :
+        sumcon_text = sumcon_text + '\n\n'
+    if req_tex :
+        req_tex = "[REQUIREMENT]\n" + req_tex + '\n'
     
-    return maximum_atk + materials + sum_con + req + efftype + '\n' + effect
+    return maximum_atk + mat_text + sumcon_text + req_tex + efftype + eff_text
 
-def FormatCardName(pagetitle):
+def GenerateCardNameFromPageTitle(pagetitle):
     replacements = {
         '_': ' ',
         '(Rush Duel)': '(Rush)',
@@ -376,20 +378,22 @@ def FormatCardName(pagetitle):
 
     return output_string
 
-def GenerateLevelWithPScale(lvl,scale):
-    level = int(lvl.strip())
-    lscale = int(scale.strip())
+def GetLevelwithPScale(cardinfo):
+    level = int(cardinfo.get('level', '0').strip())
+    lscale = int(cardinfo.get('pendulum_scale', '0').strip())
     rscale = lscale
     return ((lscale << 24) | (rscale << 16) | (level & 0xff))
 
-def convert_to_integer_or_return_original(string):
+def ReturnBaseIDOrNone(string):
+    string = string[:6]
     try:
         number = int(string)
-        return number
+        return int(string)
     except ValueError:
-        return string
+        return None
 
-def delete_file(filename):
+# Generic methods
+def DeleteFile(filename):
     current_directory = os.getcwd()
     file_path = os.path.join(current_directory, filename)
     if os.path.isfile(file_path):
@@ -401,7 +405,16 @@ def delete_file(filename):
     else:
         return f"File '{filename}' not found in the current directory."
 
-def append_cdb(filename):
+def AppendCDBToFileName(filename):
     if not filename.endswith('.cdb'):
         filename += '.cdb'
     return filename
+
+
+
+
+
+
+
+
+
