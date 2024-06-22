@@ -1,5 +1,6 @@
 import os #Used to remove existing files with the same name
 import re #Regex expressions, to manage card text/name
+import logging
 
 TYPE_MONSTER     = 0x1
 TYPE_SPELL       = 0x2
@@ -292,7 +293,6 @@ def CreatePasscodeFromBaseset(setbase, input_string):
     else:
         return 0
 
-#TODO: read from our github?
 def GenerateArchetype(string):
     if not string:
         return 0
@@ -385,36 +385,34 @@ def GetLevelwithPScale(cardinfo):
     return ((lscale << 24) | (rscale << 16) | (level & 0xff))
 
 def ReturnBaseIDOrNone(string):
-    string = string[:6]
+    if not string:
+        return 100000
+
+    substring = string[:6]
     try:
-        number = int(string)
-        return int(string)
+        return int(substring)
     except ValueError:
-        return None
+        return 100000
 
 # Generic methods
 def DeleteFile(filename):
     current_directory = os.getcwd()
     file_path = os.path.join(current_directory, filename)
+    
     if os.path.isfile(file_path):
         try:
             os.remove(file_path)
+            logging.info(f"File '{file_path}' deleted successfully.")
             return f"File '{filename}' deleted successfully."
         except Exception as e:
-            return f"Error deleting file '{filename}': {e}"
+            logging.error(f"Error deleting file '{file_path}': {e}")
+            return f"Error deleting file '{file_path}': {e}"
     else:
-        return f"File '{filename}' not found in the current directory."
+        logging.warning(f"File '{file_path}' not found.")
+        return f"File '{filename}' does not exist."
 
 def AppendCDBToFileName(filename):
     if not filename.endswith('.cdb'):
-        filename += '.cdb'
+        filename = os.path.splitext(filename)[0] + '.cdb'
     return filename
-
-
-
-
-
-
-
-
 

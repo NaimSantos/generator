@@ -2,6 +2,9 @@ from common import *
 import requests
 import wikitextparser as wtp
 from urllib.parse import urlparse, unquote
+import logging
+import os
+import json
 
 mainurl = 'https://yugipedia.com/api.php'
 useragent = {
@@ -22,14 +25,27 @@ def GetPageContentFromPageTitle(page_title):
         'rvprop': 'content',
         'format': 'json'
     }
-    response = requests.get(mainurl, headers=useragent, params=executionparparams)
-    if response.status_code == 200:
-        data = response.json()
-        pages = data['query']['pages']
-        return next(iter(pages.values()))['revisions'][0]['*']
-    else:
-        print(f"Error: {response.status_code}")
+    try:
+        response = requests.get(mainurl, headers=useragent, params=executionparparams)
+        response.raise_for_status()  # Raise an exception for HTTP errors (4xx and 5xx)
+
+        if response.status_code == 200:
+            data = response.json()
+            #SaveJsonToFile(data, f"{page_title}_content.json")
+            pages = data['query']['pages']
+            return next(iter(pages.values()))['revisions'][0]['*']
+        else:
+            logging.error(f"Unexpected response code: {response.status_code}")
+            return None
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request error: {e}")
         return None
+
+def SaveJsonToFile(data, file_name):
+    file_path = os.path.join(os.getcwd(), file_name)
+    with open(file_path, 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=4)
+    return file_path
 
 def ExtractCardInfo(page_content):
     parsed_wikitext = wtp.parse(page_content)
@@ -52,7 +68,7 @@ def PrintFullCardInfo(page_content):
                 print(f"{arg.name.strip()}: {arg.value.strip()}")
             break
 
-def GetCardInfoAndPageTitle(url,printinfo="False"):
+def GetCardInfoAndPageTitle(url, printinfo="False"):
     page_title = GetPageTitleFromUrl(url)
     card_info = None
 
@@ -72,7 +88,7 @@ def GetCardInfoAndPageTitle(url,printinfo="False"):
     return card_info,page_title
 
 
-def FillCardObjectFromCardInfo(cardinfo,pagetitle,baseID,producttype):
+def FillCardObjectFromCardInfo(cardinfo, pagetitle, baseID, producttype):
     cardobject=CardObject()
 
     ##Card name

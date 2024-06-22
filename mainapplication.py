@@ -6,7 +6,6 @@ from sqlite_manager import *
 #from time import strftime
 
 
-
 # To clear placeholder text on click
 def clear_placeholder(event, widget, default_text):
     current_text = widget.get("1.0", "end-1c")
@@ -39,7 +38,7 @@ def CreateMainScreen(window):
 
     # Output file label and text box with placeholder
     label_outputfile = ttk.Label(frame, text="Output file:", justify="left", width=20)
-    label_outputfile.grid(row=0, column=0, pady=5, sticky="w")
+    label_outputfile.grid(row=0, column=0, pady=8, sticky="w")
 
     textbox_outputfile = tk.Text(frame, height=1, width=60, bg="white", fg="gray")
     textbox_outputfile.insert("1.0", default_outputfile_text)
@@ -50,7 +49,7 @@ def CreateMainScreen(window):
 
     # Set/pack code label and text box with placeholder
     label_packcode = ttk.Label(frame, text="Code of the set/pack:", justify="left", width=20)
-    label_packcode.grid(row=2, column=0, pady=10, sticky="w")
+    label_packcode.grid(row=2, column=0, pady=8, sticky="w")
 
     textbox_packcode = tk.Text(frame, height=1, width=60, bg="white", fg="gray")
     textbox_packcode.insert("1.0", default_packcode_text)
@@ -65,17 +64,17 @@ def CreateMainScreen(window):
 
     textbox_urls = tk.Text(frame, height=10, width=60, bg="white", fg="gray")
     textbox_urls.insert("1.0", default_urls_text)
-    textbox_urls.grid(row=4, column=1, columnspan=3, padx=10, pady=5, sticky="nsew")
+    textbox_urls.grid(row=4, column=1, columnspan=3, padx=10, sticky="nsew")
 
     textbox_urls.bind("<FocusIn>", lambda event: clear_placeholder(event, textbox_urls, default_urls_text))
     textbox_urls.bind("<FocusOut>", lambda event: restore_placeholder(event, textbox_urls, default_urls_text))
 
     # Radio buttons for the product type (official, not released, rush)
     label_typeofcards = ttk.Label(frame, text="Type of the cards:", justify="left", width=20)
-    label_typeofcards.grid(row=1, column=0, pady=5, sticky="w")
+    label_typeofcards.grid(row=1, column=0, pady=8, sticky="w")
 
     radbutton_official = ttk.Radiobutton(frame, text="Official cards already released", variable=SelectedOT, value=1)
-    radbutton_official.grid(row=1, column=1, sticky="w")
+    radbutton_official.grid(row=1, column=1)
 
     radbutton_unreleased = ttk.Radiobutton(frame, text="Unreleased official cards", variable=SelectedOT, value=2)
     radbutton_unreleased.grid(row=1, column=2, sticky="w")
@@ -125,21 +124,29 @@ def main():
     CreateMainScreen(mainscreen)
     mainscreen.mainloop()
 
-def GenerateCDB(file_name,producttype,baseset,urls):
+def GenerateCDB(file_name, producttype, baseset, urls):
+    try:
+        baseID = ReturnBaseIDOrNone(baseset)
+        file_name = AppendCDBToFileName(file_name)
+        DeleteFile(file_name)
+        CreateNewDatabase(file_name)
 
-    baseID=ReturnBaseIDOrNone(baseset)
-    file_name=AppendCDBToFileName(file_name)
-    DeleteFile(file_name)
-    CreateNewDatabase(file_name)
-
-    urls = urls.split('\n')
-    for url in urls:
-        page,title=GetCardInfoAndPageTitle(url)
-        print("title is ", title)
-        cardobject=FillCardObjectFromCardInfo(page,title,baseID,producttype)
-        InsertIntoDatabase(file_name,cardobject)
-    print("Finished!")
-    messagebox.showinfo("Success", "CDB generated successfully!")
+        urls = urls.split('\n')
+        total_urls = len(urls)
+        
+        for idx, url in enumerate(urls, start=1):
+            try:
+                page, title = GetCardInfoAndPageTitle(url)
+                print(f"Processing {idx}/{total_urls}: {title}")
+                cardobject = FillCardObjectFromCardInfo(page, title, baseID, producttype)
+                InsertIntoDatabase(file_name, cardobject)
+            except Exception as e:
+                print(f"Error processing URL {url}: {e}")
+        
+        print("Finished!")
+        messagebox.showinfo("Success", "CDB generated successfully!")
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
 
 def GetTextFromWidget(text_widget):
     return text_widget.get("1.0", "end-1c")
